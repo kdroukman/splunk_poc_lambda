@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Lambda application that calls the Lambda API.
+Resources:
+  function:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs12.x
+      CodeUri: function/.
+      Description: Send message to SQS
+      Timeout: 60
+      # Function's execution role
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSLambda_ReadOnlyAccess
+        - AWSXrayWriteOnlyAccess
+        # SQS Custom Policy
+        # - KH_AWSSQSLambdaSendReceive
+      #Tracing: Active
+      Layers:
+        - !Ref libs
+        - arn:aws:lambda:ap-southeast-2:254067382080:layer:signalfx-lambda-nodejs-wrapper:20
+      Environment:
+        Variables:
+          SIGNALFX_ACCESS_TOKEN: <xxx>
+          SIGNALFX_METRICS_URL: https://ingest.us1.signalfx.com
+          SIGNALFX_ENDPOINT_URL: https://ingest.us1.signalfx.com/v2/trace
+          SIGNALFX_SEND_TIMEOUT: 30000
+          SIGNALFX_SERVICE_NAME: producer-lambda
+          SIGNALFX_SPAN_TAGS: environment=<initials>-nodejs-sqs
+  libs:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: blank-nodejs-lib
+      Description: Dependencies for the blank sample app.
+      ContentUri: lib/.
+      CompatibleRuntimes:
+        - nodejs12.x
